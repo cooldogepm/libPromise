@@ -7,20 +7,12 @@ namespace cooldogedev\libPromise\thread;
 use Closure;
 use cooldogedev\libPromise\constant\PromiseState;
 use cooldogedev\libPromise\IPromise;
-use cooldogedev\libPromise\thread\context\VariableContext;
 use cooldogedev\libPromise\traits\CommonPromisePartsTrait;
 use Threaded;
 
 final class ThreadedPromise extends Threaded implements IPromise
 {
     use CommonPromisePartsTrait;
-
-    /**
-     * TODO: Find a usage for this
-     *
-     * @var VariableContext
-     */
-    protected VariableContext $variableContext;
 
     public function __construct(protected Closure $executor, protected ?Closure $onCompletion = null)
     {
@@ -35,15 +27,14 @@ final class ThreadedPromise extends Threaded implements IPromise
 
         $this->thenables = [];
         $this->catchers = [];
-
-        $this->variableContext = new VariableContext();
     }
 
-    public function getVariableContext(): VariableContext
-    {
-        return $this->variableContext;
-    }
-
+    /**
+     * this method is ran on the main thread after settlement, it's similar to @see IPromise::finally()
+     * except this one gets the response as a parameter.
+     *
+     * @return Closure|null
+     */
     public function getOnCompletion(): ?Closure
     {
         return $this->onCompletion;

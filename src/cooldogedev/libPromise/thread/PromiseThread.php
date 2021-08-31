@@ -27,7 +27,7 @@ final class PromiseThread extends Thread
          */
         foreach ($this->getSettledPromises() as $index => $promise) {
             $onCompletion = $promise->getOnCompletion();
-            $onCompletion && $onCompletion();
+            $onCompletion && $onCompletion($promise->getResponse());
             $this->removePromise($index);
         }
         $then && $then();
