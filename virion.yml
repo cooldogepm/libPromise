@@ -1,0 +1,7 @@
+name: libpromise
+antigen: cooldogedev\libPromise
+api: [ 4.0.0 ]
+author: cooldogedev
+description: an implementation of Promises in PHP
+php: [ 8.0 ]
+version: 0.0.1
