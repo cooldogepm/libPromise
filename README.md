@@ -112,3 +112,7 @@ $promise
 
 $pool->addPromise($promise);
 ```
+
+### Projects using libPromise
+- [libSQL](https://github.com/cooldogedev/libSQL)
+- [BedrockEconomy](https://github.com/cooldogedev/BedrockEconomy)
