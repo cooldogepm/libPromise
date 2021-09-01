@@ -16,7 +16,7 @@ server_root
 - Download pre-compiled `.phar` files can be downloaded from [poggit](https://poggit.pmmp.io/ci/cooldogedev/libPromise/libPromise).
 - Place the pre-compiled `.phar` in the `virions` directory
 
-# Running from source code
+## Running from source code
 
 Clone the repository via git `git clone git@github.com:cooldogedev/libPromise.git`. This will create a `libPromise` folder in your directory.
 
