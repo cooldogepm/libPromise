@@ -2,7 +2,7 @@
 
 A minimalistic implementation of [Promises](https://en.wikipedia.org/wiki/Futures_and_promises) for PHP.
 
-# Installation via DEVirion
+## Installation via DEVirion
 
 Install the [DEVirion](https://poggit.pmmp.io/ci/poggit/devirion/DEVirion) plugin and start your server. This will create a `virions` folder in your server's root directory.
 
