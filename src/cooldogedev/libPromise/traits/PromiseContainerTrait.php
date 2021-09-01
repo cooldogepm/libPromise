@@ -31,6 +31,9 @@ use cooldogedev\libPromise\IPromise;
 
 trait PromiseContainerTrait
 {
+    /**
+     * @var IPromise[]
+     */
     protected array $promises;
 
     public function addPromise(IPromise $promise): bool

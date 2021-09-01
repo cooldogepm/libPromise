@@ -27,17 +27,21 @@ declare(strict_types=1);
 namespace cooldogedev\libPromise\error;
 
 use Exception;
+use Serializable;
+use Threaded;
 
-final class PromiseError
+final class PromiseError implements Serializable
 {
+    protected Threaded $trace;
+
     public function __construct(
         protected string $message = "",
         protected int    $code = 0,
         protected string $file = "",
         protected int    $line = 0,
-        protected array  $trace = []
     )
     {
+        $this->trace = new Threaded();
     }
 
     public static function fromException(Exception $exception): PromiseError
@@ -50,12 +54,12 @@ final class PromiseError
         return json_encode($this->getTrace());
     }
 
-    public function getTrace(): array
+    public function getTrace(): Threaded
     {
         return $this->trace;
     }
 
-    public function __toString(): string
+    public function serialize(): string
     {
         return json_encode(
             [
@@ -86,5 +90,10 @@ final class PromiseError
     public function getLine(): int
     {
         return $this->line;
+    }
+
+    public function unserialize($data): PromiseError
+    {
+        return new PromiseError(... json_decode($data, true));
     }
 }

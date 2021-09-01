@@ -26,7 +26,7 @@ declare(strict_types=1);
 
 namespace cooldogedev\libPromise;
 
-use cooldogedev\libPromise\thread\PromiseThread;
+use cooldogedev\libPromise\thread\PromiseSettlerThread;
 use cooldogedev\libPromise\thread\ThreadedPromise;
 use cooldogedev\libPromise\traits\PromiseContainerTrait;
 use pocketmine\plugin\PluginBase;
@@ -39,12 +39,12 @@ final class PromisePool
     }
 
     protected SleeperNotifier $sleeperNotifier;
-    protected PromiseThread $thread;
+    protected PromiseSettlerThread $thread;
 
     public function __construct(protected PluginBase $plugin)
     {
         $this->sleeperNotifier = new SleeperNotifier();
-        $this->thread = new PromiseThread($this->getSleeperNotifier());
+        $this->thread = new PromiseSettlerThread($this->getSleeperNotifier());
         $this->promises = [];
 
         $this->getPlugin()->getServer()->getTickSleeper()->addNotifier(
@@ -67,7 +67,7 @@ final class PromisePool
         return $this->plugin;
     }
 
-    protected function getThread(): PromiseThread
+    protected function getThread(): PromiseSettlerThread
     {
         return $this->thread;
     }

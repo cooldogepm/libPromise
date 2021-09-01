@@ -28,17 +28,39 @@ namespace cooldogedev\libPromise;
 
 use Closure;
 use cooldogedev\libPromise\constant\PromiseState;
-use cooldogedev\libPromise\traits\CommonPromisePartsTrait;
+use cooldogedev\libPromise\error\PromiseError;
+use cooldogedev\libPromise\traits\SharedPromisePartsTrait;
 
 final class Promise implements IPromise
 {
-    use CommonPromisePartsTrait;
+    use SharedPromisePartsTrait;
 
-    public function __construct(protected Closure $executor)
+    protected ?Closure $onSettlement;
+
+    protected mixed $response;
+
+    protected ?PromiseError $error;
+
+    protected bool $settled;
+
+    protected int $state;
+
+    /**
+     * @var Closure[]
+     */
+    protected array $thenables = [];
+
+    /**
+     * @var Closure[]
+     */
+    protected array $catchers = [];
+
+    public function __construct(protected ?Closure $executor = null)
     {
         $this->onSettlement = null;
 
         $this->response = null;
+
         $this->error = null;
 
         $this->settled = false;
@@ -46,6 +68,39 @@ final class Promise implements IPromise
         $this->state = PromiseState::PROMISE_STATE_PENDING;
 
         $this->thenables = [];
+
         $this->catchers = [];
+    }
+
+    public function then(Closure $resolve): IPromise
+    {
+        $this->thenables[] = $resolve;
+        return $this;
+    }
+
+    public function catch(Closure $closure): IPromise
+    {
+        $this->catchers[] = $closure;
+        return $this;
+    }
+
+    public function getCatchers(): array
+    {
+        return $this->catchers;
+    }
+
+    public function getThenables(): array
+    {
+        return $this->thenables;
+    }
+
+    public function getResponse(): mixed
+    {
+        return $this->response;
+    }
+
+    public function setResponse(mixed $response): void
+    {
+        $this->response = $response;
     }
 }

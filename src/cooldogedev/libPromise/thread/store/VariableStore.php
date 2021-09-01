@@ -24,53 +24,40 @@
 
 declare(strict_types=1);
 
-namespace cooldogedev\libPromise;
+namespace cooldogedev\libPromise\thread\store;
 
-use Closure;
-use cooldogedev\libPromise\error\PromiseError;
-use Exception;
+use Threaded;
 
-interface IPromise
+final class VariableStore extends Threaded
 {
-    public function getError(): ?PromiseError;
+    protected Threaded $store;
 
-    public function setError(?PromiseError $error): void;
+    public function __construct()
+    {
+        $this->store = new Threaded();
+    }
 
-    public function getResponse(): mixed;
+    public function setVariable(string $variable, mixed $value, bool $override): bool
+    {
+        if ($this->hasVariable($variable) && !$override) {
+            return false;
+        }
+        $this->store[$variable] = $value;
+        return true;
+    }
 
-    public function setResponse(mixed $response): void;
+    public function hasVariable(string $variable): bool
+    {
+        return isset($this->store[$variable]);
+    }
 
-    public function then(Closure $resolve): IPromise;
+    public function getVariable(string $variable): mixed
+    {
+        return $this->store[$variable] ?? null;
+    }
 
-    public function catch(Closure $closure): IPromise;
-
-    public function getOnSettlement(): ?Closure;
-
-    public function finally(Closure $closure): IPromise;
-
-    public function isSettled(): bool;
-
-    public function setSettled(bool $settled): void;
-
-    public function isPending(): bool;
-
-    public function getState(): int;
-
-    public function setState(int $state): void;
-
-    public function resolve(mixed $value): IPromise;
-
-    public function reject(?Exception $exception): IPromise;
-
-    public function handleRejection(): void;
-
-    public function handleResolve(): void;
-
-    public function settle(): void;
-
-    public function getExecutor(): ?Closure;
-
-    public function getThenables();
-
-    public function getCatchers();
+    public function getStore(): Threaded
+    {
+        return $this->store;
+    }
 }

@@ -31,7 +31,7 @@ use cooldogedev\libPromise\traits\PromiseContainerTrait;
 use pocketmine\snooze\SleeperNotifier;
 use pocketmine\thread\Thread;
 
-final class PromiseThread extends Thread
+final class PromiseSettlerThread extends Thread
 {
     use PromiseContainerTrait;
 

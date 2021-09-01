@@ -32,53 +32,11 @@ use cooldogedev\libPromise\error\PromiseError;
 use cooldogedev\libPromise\IPromise;
 use Exception;
 
-trait CommonPromisePartsTrait
+trait SharedPromisePartsTrait
 {
-    protected ?Closure $onSettlement;
-
-    protected ?string $response;
-    protected ?PromiseError $error;
-
-    protected bool $settled;
-
-    protected int $state;
-
-    /**
-     * @var Closure[]
-     */
-    protected array $thenables;
-
-    /**
-     * @var Closure[]
-     */
-    protected array $catchers;
-
-    public function then(Closure $resolve): IPromise
-    {
-        $this->thenables[] = $resolve;
-        return $this;
-    }
-
-    public function catch(Closure $closure): IPromise
-    {
-        $this->catchers[] = $closure;
-        return $this;
-    }
-
-    public function finally(Closure $closure): IPromise
-    {
-        $this->onSettlement = $closure;
-        return $this;
-    }
-
     public function isSettled(): bool
     {
         return $this->settled;
-    }
-
-    public function setSettled(bool $settled): void
-    {
-        $this->settled = $settled;
     }
 
     public function isPending(): bool
@@ -91,9 +49,10 @@ trait CommonPromisePartsTrait
         return $this->state;
     }
 
-    public function setState(int $state): void
+    public function finally(?Closure $closure): IPromise
     {
-        $this->state = $state;
+        $this->onSettlement = $closure;
+        return $this;
     }
 
     public function settle(): void
@@ -122,7 +81,7 @@ trait CommonPromisePartsTrait
         }
     }
 
-    public function getExecutor(): Closure
+    public function getExecutor(): ?Closure
     {
         return $this->executor;
     }
@@ -135,18 +94,18 @@ trait CommonPromisePartsTrait
 
     public function reject(?Exception $exception): IPromise
     {
-        $this->setError(new PromiseError($exception->getMessage(), $exception->getCode(), $exception->getFile(), $exception->getLine(), $exception->getTrace()));
+        $this->setError(PromiseError::fromException($exception));
         return $this;
-    }
-
-    public function getError(): ?PromiseError
-    {
-        return $this->error;
     }
 
     public function setError(?PromiseError $error): void
     {
         $this->error = $error;
+    }
+
+    public function getError(): ?PromiseError
+    {
+        return $this->error;
     }
 
     public function handleRejection(): void
@@ -158,9 +117,9 @@ trait CommonPromisePartsTrait
         $this->setState(PromiseState::PROMISE_STATE_REJECTED);
     }
 
-    public function getCatchers(): array
+    public function setState(int $state): void
     {
-        return $this->catchers;
+        $this->state = $state;
     }
 
     public function handleResolve(): void
@@ -173,23 +132,13 @@ trait CommonPromisePartsTrait
         $this->setState(PromiseState::PROMISE_STATE_FULFILLED);
     }
 
-    public function getThenables(): array
-    {
-        return $this->thenables;
-    }
-
-    public function getResponse(): mixed
-    {
-        return unserialize($this->response);
-    }
-
-    public function setResponse(mixed $response): void
-    {
-        $this->response = serialize($response);
-    }
-
     public function getOnSettlement(): ?Closure
     {
         return $this->onSettlement;
+    }
+
+    public function setSettled(bool $settled): void
+    {
+        $this->settled = $settled;
     }
 }
