@@ -68,6 +68,26 @@ $promise
 
 ## ThreadedPromise Examples
 
+### ThreadedPromise that returns a promise
+
+```php
+$pool = new PromisePool($this);
+
+$promise = new ThreadedPromise(
+    function (): ThreadedPromise {
+        return new ThreadedPromise(fn(string $response) => var_dump("a nested promise"));
+    },
+    function (ThreadedPromise $promise): void {
+        /**
+         * You can convert the ThreadedPromise to a regular Promise via @link ThreadedPromise::asPromise()
+         */
+        $promise->settle();
+    }
+);
+
+$pool->addPromise($promise);
+```
+
 ### Coinbase API endpoint fetcher
 
 ```php
