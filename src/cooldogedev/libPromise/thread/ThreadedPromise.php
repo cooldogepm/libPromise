@@ -72,7 +72,7 @@ final class ThreadedPromise extends Threaded implements IPromise
 
     public function setResponse(mixed $response): void
     {
-        $this->getVariableStore()->setVariable("response", $response, true);
+        $this->getVariableStore()->setVariable("response", $response, true, is_array($response));
     }
 
     public function getVariableStore(): VariableStore
@@ -100,7 +100,7 @@ final class ThreadedPromise extends Threaded implements IPromise
 
         $promise->setError($this->getError());
 
-        $promise->finally($this->getOnCompletion());
+        $promise->finally($this->getOnSettlement());
 
         $promise->setState($this->getState());
 
@@ -119,7 +119,7 @@ final class ThreadedPromise extends Threaded implements IPromise
 
     public function getResponse(): mixed
     {
-        return $this->getVariableStore()->getVariable("response");
+        return $this->getVariableStore()->getVariable("response", true);
     }
 
     /**

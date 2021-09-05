@@ -37,12 +37,12 @@ final class VariableStore extends Threaded
         $this->store = new Threaded();
     }
 
-    public function setVariable(string $variable, mixed $value, bool $override): bool
+    public function setVariable(string $variable, mixed $value, bool $override = false, bool $serialize = false): bool
     {
         if ($this->hasVariable($variable) && !$override) {
             return false;
         }
-        $this->store[$variable] = $value;
+        $this->store[$variable] = $serialize ? serialize($value) : $value;
         return true;
     }
 
@@ -51,9 +51,13 @@ final class VariableStore extends Threaded
         return isset($this->store[$variable]);
     }
 
-    public function getVariable(string $variable): mixed
+    public function getVariable(string $variable, bool $deserialize = false): mixed
     {
-        return $this->store[$variable] ?? null;
+        if (!$this->hasVariable($variable)) {
+            return null;
+        }
+        $value = $this->store[$variable];
+        return $deserialize ? unserialize($value) ?: null : $value;
     }
 
     public function getStore(): Threaded
