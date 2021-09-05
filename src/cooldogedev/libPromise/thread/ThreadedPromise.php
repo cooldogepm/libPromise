@@ -92,6 +92,12 @@ final class ThreadedPromise extends Threaded implements IPromise
         return $this;
     }
 
+    public function onCompletion(?Closure $onCompletion): IPromise
+    {
+        $this->onCompletion = $onCompletion;
+        return $this;
+    }
+
     public function asPromise(): Promise
     {
         $promise = new Promise($this->getExecutor());
@@ -122,17 +128,6 @@ final class ThreadedPromise extends Threaded implements IPromise
         return $this->getVariableStore()->getVariable("response", true);
     }
 
-    /**
-     * this method is ran on the main thread after settlement, it's similar to
-     * @return Closure|null
-     * @link IPromise::finally() except this one gets the response as a parameter.
-     *
-     */
-    public function getOnCompletion(): ?Closure
-    {
-        return $this->onCompletion;
-    }
-
     public function getCatchers(): Threaded
     {
         return $this->catchers;
@@ -141,5 +136,14 @@ final class ThreadedPromise extends Threaded implements IPromise
     public function getThenables(): Threaded
     {
         return $this->thenables;
+    }
+
+    /**
+     * This method is ran on the main thread after settlement, it's similar to @link IPromise::finally()
+     * except this one gets the response as a parameter.
+     */
+    public function getOnCompletion(): ?Closure
+    {
+        return $this->onCompletion;
     }
 }
