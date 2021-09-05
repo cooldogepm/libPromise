@@ -57,7 +57,7 @@ final class VariableStore extends Threaded
             return null;
         }
         $value = $this->store[$variable];
-        return $deserialize ? unserialize($value) ?: null : $value;
+        return $deserialize ? unserialize($value) ?: $value : $value;
     }
 
     public function getStore(): Threaded
