@@ -30,6 +30,7 @@ use Closure;
 use cooldogedev\libPromise\traits\PromiseContainerTrait;
 use pocketmine\snooze\SleeperNotifier;
 use pocketmine\thread\Thread;
+use const PTHREADS_INHERIT_NONE;
 
 final class PromiseSettlerThread extends Thread
 {
@@ -39,8 +40,17 @@ final class PromiseSettlerThread extends Thread
 
     public function __construct(protected SleeperNotifier $sleeperNotifier)
     {
-        $this->running = true;
         $this->promises = [];
+        $this->running = false;
+    }
+
+    public function start(int $options = PTHREADS_INHERIT_NONE): bool
+    {
+        if (parent::start($options)) {
+            $this->setRunning(true);
+            return true;
+        }
+        return false;
     }
 
     public function clearSettledPromises(?Closure $then = null): void
