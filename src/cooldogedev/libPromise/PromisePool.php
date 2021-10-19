@@ -38,28 +38,23 @@ final class PromisePool
         addPromise as protected _addPromise;
     }
 
-    protected SleeperNotifier $sleeperNotifier;
     protected PromiseSettlerThread $thread;
 
     public function __construct(protected PluginBase $plugin)
     {
-        $this->sleeperNotifier = new SleeperNotifier();
-        $this->thread = new PromiseSettlerThread($this->getSleeperNotifier());
         $this->promises = [];
 
+        $sleeperNotifier = new SleeperNotifier();
+        $this->thread = new PromiseSettlerThread($sleeperNotifier);
+
         $this->getPlugin()->getServer()->getTickSleeper()->addNotifier(
-            $this->getSleeperNotifier(),
-            function () {
+            $sleeperNotifier,
+            function (): void {
                 $this->getThread()->clearSettledPromises(fn() => $this->clearSettledPromises());
             }
         );
-        $this->getSleeperNotifier()->wakeupSleeper();
-        $this->getThread()->start();
-    }
 
-    public function getSleeperNotifier(): SleeperNotifier
-    {
-        return $this->sleeperNotifier;
+        $this->getThread()->start();
     }
 
     public function getPlugin(): PluginBase
