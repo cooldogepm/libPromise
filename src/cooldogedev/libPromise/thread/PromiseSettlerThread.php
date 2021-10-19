@@ -61,8 +61,8 @@ final class PromiseSettlerThread extends Thread
         while ($this->isRunning()) {
             foreach ($this->getPendingPromises() as $promise) {
                 $promise->settle();
+                $this->getSleeperNotifier()->wakeupSleeper();
             }
-            $this->getSleeperNotifier()->wakeupSleeper();
         }
     }
 
