@@ -28,12 +28,12 @@ namespace cooldogedev\libPromise\thread;
 
 use Closure;
 use cooldogedev\libPromise\constant\PromiseState;
-use cooldogedev\libPromise\error\PromiseError;
+use cooldogedev\libPromise\error\ThreadedPromiseError;
 use cooldogedev\libPromise\IPromise;
 use cooldogedev\libPromise\Promise;
-use cooldogedev\libPromise\thread\store\VariableStore;
 use cooldogedev\libPromise\traits\SharedPromisePartsTrait;
 use Threaded;
+use Throwable;
 
 final class ThreadedPromise extends Threaded implements IPromise
 {
@@ -41,7 +41,7 @@ final class ThreadedPromise extends Threaded implements IPromise
 
     protected ?Closure $onSettlement;
 
-    protected ?PromiseError $error;
+    protected ThreadedPromiseError $error;
 
     protected bool $settled;
 
@@ -51,13 +51,14 @@ final class ThreadedPromise extends Threaded implements IPromise
 
     protected Threaded $catchers;
 
-    protected VariableStore $variableStore;
+    protected mixed $response;
+    protected bool $responseSerialized;
 
     public function __construct(protected ?Closure $executor = null, protected ?Closure $onCompletion = null)
     {
         $this->onSettlement = null;
 
-        $this->error = null;
+        $this->error = new ThreadedPromiseError();
 
         $this->settled = false;
 
@@ -67,17 +68,13 @@ final class ThreadedPromise extends Threaded implements IPromise
 
         $this->catchers = new Threaded();
 
-        $this->variableStore = new VariableStore();
+        $this->response = null;
+        $this->responseSerialized = false;
     }
 
-    public function setResponse(mixed $response): void
+    public function isResponseSerialized(): bool
     {
-        $this->getVariableStore()->setVariable("response", $response, true, is_array($response));
-    }
-
-    public function getVariableStore(): VariableStore
-    {
-        return $this->variableStore;
+        return $this->responseSerialized;
     }
 
     public function then(Closure $resolve): IPromise
@@ -104,7 +101,7 @@ final class ThreadedPromise extends Threaded implements IPromise
 
         $promise->setResponse($this->getResponse());
 
-        $promise->setError($this->getError());
+        $promise->setError($this->getError()->asException());
 
         $promise->finally($this->getOnSettlement());
 
@@ -125,7 +122,24 @@ final class ThreadedPromise extends Threaded implements IPromise
 
     public function getResponse(): mixed
     {
-        return $this->getVariableStore()->getVariable("response", true);
+        return $this->responseSerialized ? unserialize($this->response) : $this->response;
+    }
+
+    public function setResponse(mixed $response): void
+    {
+        $serialize = is_array($response);
+        $this->response = $serialize ? serialize($response) : $response;
+        $this->responseSerialized = $serialize;
+    }
+
+    public function getError(): ThreadedPromiseError
+    {
+        return $this->error;
+    }
+
+    public function setError(?Throwable $error): void
+    {
+        $this->getError()->updateParameters($error);
     }
 
     public function getCatchers(): Threaded
@@ -136,6 +150,12 @@ final class ThreadedPromise extends Threaded implements IPromise
     public function getThenables(): Threaded
     {
         return $this->thenables;
+    }
+
+    public function reject(?Throwable $throwable): IPromise
+    {
+        $this->getError()->updateParameters($throwable);
+        return $this;
     }
 
     /**

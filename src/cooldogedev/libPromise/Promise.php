@@ -28,8 +28,8 @@ namespace cooldogedev\libPromise;
 
 use Closure;
 use cooldogedev\libPromise\constant\PromiseState;
-use cooldogedev\libPromise\error\PromiseError;
 use cooldogedev\libPromise\traits\SharedPromisePartsTrait;
+use Throwable;
 
 final class Promise implements IPromise
 {
@@ -39,7 +39,7 @@ final class Promise implements IPromise
 
     protected mixed $response;
 
-    protected ?PromiseError $error;
+    protected ?Throwable $error;
 
     protected bool $settled;
 
@@ -81,6 +81,22 @@ final class Promise implements IPromise
     public function catch(Closure $closure): IPromise
     {
         $this->catchers[] = $closure;
+        return $this;
+    }
+
+    public function getError(): ?Throwable
+    {
+        return $this->error;
+    }
+
+    public function setError(?Throwable $error): void
+    {
+        $this->error = $error;
+    }
+
+    public function reject(?Throwable $throwable): IPromise
+    {
+        $this->setError($throwable);
         return $this;
     }
 

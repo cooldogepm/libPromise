@@ -27,14 +27,13 @@ declare(strict_types=1);
 namespace cooldogedev\libPromise;
 
 use Closure;
-use cooldogedev\libPromise\error\PromiseError;
-use Exception;
+use Throwable;
 
 interface IPromise
 {
-    public function getError(): ?PromiseError;
+    public function getError();
 
-    public function setError(?PromiseError $error): void;
+    public function setError(?Throwable $error): void;
 
     public function getResponse(): mixed;
 
@@ -60,7 +59,7 @@ interface IPromise
 
     public function resolve(mixed $value): IPromise;
 
-    public function reject(?Exception $exception): IPromise;
+    public function reject(?Throwable $throwable): IPromise;
 
     public function handleRejection(): void;
 

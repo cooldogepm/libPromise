@@ -28,29 +28,42 @@ namespace cooldogedev\libPromise;
 
 use cooldogedev\libPromise\thread\PromiseSettlerThread;
 use cooldogedev\libPromise\thread\ThreadedPromise;
-use cooldogedev\libPromise\traits\PromiseContainerTrait;
 use pocketmine\plugin\PluginBase;
 use pocketmine\snooze\SleeperNotifier;
 
 final class PromisePool
 {
-    use PromiseContainerTrait {
-        addPromise as protected _addPromise;
-    }
+    /**
+     * @var ThreadedPromise[]
+     */
+    protected array $executionQueue;
 
     protected PromiseSettlerThread $thread;
 
     public function __construct(protected PluginBase $plugin)
     {
-        $this->promises = [];
+        $this->executionQueue = [];
 
         $sleeperNotifier = new SleeperNotifier();
+
         $this->thread = new PromiseSettlerThread($sleeperNotifier);
 
         $this->getPlugin()->getServer()->getTickSleeper()->addNotifier(
             $sleeperNotifier,
             function (): void {
-                $this->getThread()->clearSettledPromises(fn() => $this->clearSettledPromises());
+                if (count($this->getExecutionQueue()) > 0) {
+
+                    $queue = array_keys($this->getExecutionQueue());
+                    $promiseIndex = array_shift($queue);
+
+                    $promise = $this->getFromExecutionQueue($promiseIndex);
+
+                    if ($promise->isSettled()) {
+                        $promise->getOnCompletion() && $promise->getOnCompletion()($promise->getResponse());
+                        $this->removeFromExecutionQueue($promiseIndex);
+                    }
+
+                }
             }
         );
 
@@ -62,18 +75,59 @@ final class PromisePool
         return $this->plugin;
     }
 
+    /**
+     * @return ThreadedPromise[]
+     */
+    public function getExecutionQueue(): array
+    {
+        return $this->executionQueue;
+    }
+
+    public function getFromExecutionQueue(int $promise): ?ThreadedPromise
+    {
+        return $this->executionQueue[$promise] ?? null;
+    }
+
+    public function removeFromExecutionQueue(int $promise): bool
+    {
+        if (!$this->isInExecutionQueue($promise)) {
+            return false;
+        }
+        unset($this->executionQueue[$promise]);
+        return true;
+    }
+
+    public function isInExecutionQueue(int $promise): bool
+    {
+        return isset($this->executionQueue[$promise]);
+    }
+
     protected function getThread(): PromiseSettlerThread
     {
         return $this->thread;
     }
 
-    public function addPromise(IPromise $promise): bool
+    /**
+     * @param ThreadedPromise $promise
+     *
+     * @param bool $queueOnCompletionExecution used to determine whether you want to execute the
+     * @return bool
+     * @link ThreadedPromise::getOnCompletion() on the main thread or not.
+     *
+     */
+    public function addPromise(ThreadedPromise $promise, bool $queueOnCompletionExecution = false): bool
     {
-        if ($promise instanceof ThreadedPromise) {
-            $success = $this->getThread()->addPromise($promise);
-            $success && $this->_addPromise($promise);
-            return $success;
+        $success = $this->getThread()->addPromise($promise);
+
+        if ($success && $queueOnCompletionExecution) {
+            $this->addToExecutionQueue($promise);
         }
-        return $this->_addPromise($promise);
+
+        return $success;
+    }
+
+    public function addToExecutionQueue(ThreadedPromise $promise): void
+    {
+        $this->executionQueue[] = $promise;
     }
 }

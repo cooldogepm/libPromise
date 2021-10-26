@@ -26,22 +26,31 @@ declare(strict_types=1);
 
 namespace cooldogedev\libPromise\thread;
 
-use Closure;
-use cooldogedev\libPromise\traits\PromiseContainerTrait;
+use cooldogedev\libPromise\IPromise;
 use pocketmine\snooze\SleeperNotifier;
 use pocketmine\thread\Thread;
+use Volatile;
 use const PTHREADS_INHERIT_NONE;
 
 final class PromiseSettlerThread extends Thread
 {
-    use PromiseContainerTrait;
-
     protected bool $running;
+
+    protected Volatile $promises;
 
     public function __construct(protected SleeperNotifier $sleeperNotifier)
     {
-        $this->promises = [];
         $this->running = false;
+        $this->promises = new Volatile();
+    }
+
+    public function addPromise(IPromise $promise): bool
+    {
+        if ($promise->isSettled()) {
+            return false;
+        }
+        $this->promises[] = $promise;
+        return true;
     }
 
     public function start(int $options = PTHREADS_INHERIT_NONE): bool
@@ -53,25 +62,16 @@ final class PromiseSettlerThread extends Thread
         return false;
     }
 
-    public function clearSettledPromises(?Closure $then = null): void
-    {
-        /**
-         * @var ThreadedPromise $promise
-         */
-        foreach ($this->getSettledPromises() as $index => $promise) {
-            $onCompletion = $promise->getOnCompletion();
-            $onCompletion && $onCompletion($promise->getResponse());
-            $this->removePromise($index);
-        }
-        $then && $then();
-    }
-
     protected function onRun(): void
     {
         while ($this->isRunning()) {
-            foreach ($this->getPendingPromises() as $promise) {
+            while ($this->getPromises()->count() > 0) {
+                /**
+                 * @var $promise ThreadedPromise
+                 */
+                $promise = $this->getPromises()->shift();
                 $promise->settle();
-                $this->getSleeperNotifier()->wakeupSleeper();
+                $promise->getOnCompletion() && $this->getSleeperNotifier()->wakeupSleeper();
             }
         }
     }
@@ -84,6 +84,11 @@ final class PromiseSettlerThread extends Thread
     public function setRunning(bool $running): void
     {
         $this->running = $running;
+    }
+
+    public function getPromises(): Volatile
+    {
+        return $this->promises;
     }
 
     public function getSleeperNotifier(): SleeperNotifier

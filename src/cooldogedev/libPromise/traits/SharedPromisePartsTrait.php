@@ -28,9 +28,8 @@ namespace cooldogedev\libPromise\traits;
 
 use Closure;
 use cooldogedev\libPromise\constant\PromiseState;
-use cooldogedev\libPromise\error\PromiseError;
 use cooldogedev\libPromise\IPromise;
-use Exception;
+use Throwable;
 
 trait SharedPromisePartsTrait
 {
@@ -63,7 +62,7 @@ trait SharedPromisePartsTrait
             if ($executor) {
                 $response = $executor(
                     fn(mixed $response) => $this->resolve($response),
-                    fn(Exception $exception) => $this->reject($exception)
+                    fn(Throwable $throwable) => $this->reject($throwable)
                 );
                 if ($response) {
                     $this->setResponse($response);
@@ -71,8 +70,8 @@ trait SharedPromisePartsTrait
             }
 
             $this->getError() ? $this->handleRejection() : $this->handleResolve();
-        } catch (Exception $exception) {
-            $this->reject($exception);
+        } catch (Throwable $throwable) {
+            $this->reject($throwable);
             $this->handleRejection();
         } finally {
             $onSettlement = $this->getOnSettlement();
@@ -90,22 +89,6 @@ trait SharedPromisePartsTrait
     {
         $this->setResponse($value);
         return $this;
-    }
-
-    public function reject(?Exception $exception): IPromise
-    {
-        $this->setError(PromiseError::fromException($exception));
-        return $this;
-    }
-
-    public function setError(?PromiseError $error): void
-    {
-        $this->error = $error;
-    }
-
-    public function getError(): ?PromiseError
-    {
-        return $this->error;
     }
 
     public function handleRejection(): void
