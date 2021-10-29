@@ -64,9 +64,7 @@ trait SharedPromisePartsTrait
                     fn(mixed $response) => $this->resolve($response),
                     fn(Throwable $throwable) => $this->reject($throwable)
                 );
-                if ($response) {
-                    $this->setResponse($response);
-                }
+                $response && $this->setResponse($response);
             }
 
            $this->handleResolve();
@@ -74,8 +72,7 @@ trait SharedPromisePartsTrait
             $this->reject($throwable);
             $this->handleRejection();
         } finally {
-            $onSettlement = $this->getOnSettlement();
-            $onSettlement && $onSettlement();
+            $this->getOnSettlement() && $onSettlement()();
             $this->setSettled(true);
         }
     }
