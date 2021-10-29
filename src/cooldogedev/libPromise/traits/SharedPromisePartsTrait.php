@@ -69,7 +69,7 @@ trait SharedPromisePartsTrait
                 }
             }
 
-            $this->getError() ? $this->handleRejection() : $this->handleResolve();
+           $this->handleResolve();
         } catch (Throwable $throwable) {
             $this->reject($throwable);
             $this->handleRejection();
