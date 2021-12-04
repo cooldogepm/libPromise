@@ -48,12 +48,12 @@ final class Promise implements IPromise
     /**
      * @var Closure[]
      */
-    protected array $thenables = [];
+    protected array $thenables;
 
     /**
      * @var Closure[]
      */
-    protected array $catchers = [];
+    protected array $catchers;
 
     public function __construct(protected ?Closure $executor = null)
     {
