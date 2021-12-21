@@ -72,7 +72,7 @@ trait SharedPromisePartsTrait
             $this->reject($throwable);
             $this->handleRejection();
         } finally {
-            $this->getOnSettlement() && $onSettlement()();
+            $this->getOnSettlement() && $this->getOnSettlement()();
             $this->setSettled(true);
         }
     }

@@ -59,7 +59,8 @@ final class PromisePool
                     $promise = $this->getFromExecutionQueue($promiseIndex);
 
                     if ($promise->isSettled()) {
-                        $promise->getOnCompletion()($promise->getResponse());
+                        // in case the onCompletion was manipulated after the submission
+                        $promise->getOnCompletion() && $promise->getOnCompletion()($promise->getResponse());
                         $this->removeFromExecutionQueue($promiseIndex);
                     }
 
