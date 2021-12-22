@@ -47,8 +47,10 @@ final class ThreadedPromise extends Threaded implements IPromise
 
     protected int $state;
 
+    protected bool $hasThenables;
     protected Threaded $thenables;
 
+    protected bool $hasCatchers;
     protected Threaded $catchers;
 
     protected mixed $response;
@@ -65,11 +67,44 @@ final class ThreadedPromise extends Threaded implements IPromise
         $this->state = PromiseState::PROMISE_STATE_PENDING;
 
         $this->thenables = new Threaded();
+        $this->hasThenables = false;
 
         $this->catchers = new Threaded();
+        $this->hasCatchers = false;
 
         $this->response = null;
         $this->responseSerialized = false;
+    }
+
+    public function handleRejection(): void
+    {
+        if ($this->hasCatchers()) {
+            foreach ($this->getCatchers() as $catcher) {
+                $catcher($this->getError());
+            }
+        }
+
+        $this->setState(PromiseState::PROMISE_STATE_REJECTED);
+    }
+
+    public function hasCatchers(): bool
+    {
+        return $this->hasCatchers;
+    }
+
+    public function getCatchers(): Threaded
+    {
+        return $this->catchers;
+    }
+
+    public function getError(): ThreadedPromiseError
+    {
+        return $this->error;
+    }
+
+    public function setError(?Throwable $error): void
+    {
+        $this->getError()->updateParameters($error);
     }
 
     public function isResponseSerialized(): bool
@@ -79,14 +114,64 @@ final class ThreadedPromise extends Threaded implements IPromise
 
     public function then(Closure $resolve): IPromise
     {
+        if (!$this->hasThenables()) {
+            $this->setHasThenables(true);
+        }
         $this->thenables[] = $resolve;
         return $this;
     }
 
+    public function hasThenables(): bool
+    {
+        return $this->hasThenables;
+    }
+
+    public function setHasThenables(bool $hasThenables): void
+    {
+        $this->hasThenables = $hasThenables;
+    }
+
     public function catch(Closure $closure): IPromise
     {
+        if (!$this->hasCatchers()) {
+            $this->setHasCatchers(true);
+        }
         $this->catchers[] = $closure;
         return $this;
+    }
+
+    public function setHasCatchers(bool $hasCatchers): void
+    {
+        $this->hasCatchers = $hasCatchers;
+    }
+
+    public function handleResolve(): void
+    {
+        if ($this->hasThenables()) {
+            foreach ($this->getThenables() as $thenable) {
+                $response = $thenable($this->getResponse());
+                $response && $this->setResponse($response);
+            }
+        }
+
+        $this->setState(PromiseState::PROMISE_STATE_FULFILLED);
+    }
+
+    public function getThenables(): Threaded
+    {
+        return $this->thenables;
+    }
+
+    public function getResponse(): mixed
+    {
+        return $this->responseSerialized ? unserialize($this->response) : $this->response;
+    }
+
+    public function setResponse(mixed $response): void
+    {
+        $serialize = is_array($response);
+        $this->response = $serialize ? serialize($response) : $response;
+        $this->responseSerialized = $serialize;
     }
 
     public function onCompletion(?Closure $onCompletion): IPromise
@@ -118,38 +203,6 @@ final class ThreadedPromise extends Threaded implements IPromise
         }
 
         return $promise;
-    }
-
-    public function getResponse(): mixed
-    {
-        return $this->responseSerialized ? unserialize($this->response) : $this->response;
-    }
-
-    public function setResponse(mixed $response): void
-    {
-        $serialize = is_array($response);
-        $this->response = $serialize ? serialize($response) : $response;
-        $this->responseSerialized = $serialize;
-    }
-
-    public function getError(): ThreadedPromiseError
-    {
-        return $this->error;
-    }
-
-    public function setError(?Throwable $error): void
-    {
-        $this->getError()->updateParameters($error);
-    }
-
-    public function getCatchers(): Threaded
-    {
-        return $this->catchers;
-    }
-
-    public function getThenables(): Threaded
-    {
-        return $this->thenables;
     }
 
     public function reject(?Throwable $throwable): IPromise

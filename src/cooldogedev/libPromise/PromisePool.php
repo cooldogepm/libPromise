@@ -112,9 +112,9 @@ final class PromisePool
      * @param ThreadedPromise $promise
      *
      * @param bool $queueOnCompletionExecution used to determine whether you want to execute the
+     * @return bool
      * @link ThreadedPromise::getOnCompletion() on the main thread or not.
      *
-     * @return bool
      */
     public function addPromise(ThreadedPromise $promise, bool $queueOnCompletionExecution = false): bool
     {

@@ -67,7 +67,7 @@ trait SharedPromisePartsTrait
                 $response && $this->setResponse($response);
             }
 
-           $this->handleResolve();
+            $this->handleResolve();
         } catch (Throwable $throwable) {
             $this->reject($throwable);
             $this->handleRejection();
@@ -88,20 +88,6 @@ trait SharedPromisePartsTrait
         return $this;
     }
 
-    public function handleRejection(): void
-    {
-        foreach ($this->getCatchers() as $catcher) {
-            $catcher($this->getError());
-        }
-
-        $this->setState(PromiseState::PROMISE_STATE_REJECTED);
-    }
-
-    public function setState(int $state): void
-    {
-        $this->state = $state;
-    }
-
     public function handleResolve(): void
     {
         foreach ($this->getThenables() as $thenable) {
@@ -110,6 +96,20 @@ trait SharedPromisePartsTrait
         }
 
         $this->setState(PromiseState::PROMISE_STATE_FULFILLED);
+    }
+
+    public function setState(int $state): void
+    {
+        $this->state = $state;
+    }
+
+    public function handleRejection(): void
+    {
+        foreach ($this->getCatchers() as $catcher) {
+            $catcher($this->getError());
+        }
+
+        $this->setState(PromiseState::PROMISE_STATE_REJECTED);
     }
 
     public function getOnSettlement(): ?Closure
