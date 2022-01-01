@@ -95,4 +95,10 @@ final class PromiseSettlerThread extends Thread
     {
         return $this->sleeperNotifier;
     }
+
+    public function quit(): void
+    {
+        setRunning(false);
+        parent::quit();
+    }
 }
