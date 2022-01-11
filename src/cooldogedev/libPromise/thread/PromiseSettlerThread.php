@@ -49,7 +49,11 @@ final class PromiseSettlerThread extends Thread
         if ($promise->isSettled()) {
             return false;
         }
-        $this->promises[] = $promise;
+        $this->synchronized(function() use($promise): void
+        {
+            $this->promises[] = $promise;
+            $this->notify();
+        });
         return true;
     }
 
@@ -65,6 +69,12 @@ final class PromiseSettlerThread extends Thread
     protected function onRun(): void
     {
         while ($this->isRunning()) {
+            $this->synchronized(function(): void
+            {
+                if($this->getPromises()->count() === 0) {
+                    $this->wait();
+                }
+            });                  
             while ($this->getPromises()->count() > 0) {
                 /**
                  * @var $promise ThreadedPromise
