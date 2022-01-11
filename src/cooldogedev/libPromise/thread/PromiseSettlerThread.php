@@ -98,7 +98,7 @@ final class PromiseSettlerThread extends Thread
 
     public function quit(): void
     {
-        setRunning(false);
+        $this->setRunning(false);
         parent::quit();
     }
 }
