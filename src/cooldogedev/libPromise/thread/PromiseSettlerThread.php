@@ -71,7 +71,7 @@ final class PromiseSettlerThread extends Thread
         while ($this->isRunning()) {
             $this->synchronized(function(): void
             {
-                if($this->getPromises()->count() === 0) {
+                if($this->isRunning() && $this->getPromises()->count() === 0) {
                     $this->wait();
                 }
             });                  
@@ -108,7 +108,11 @@ final class PromiseSettlerThread extends Thread
 
     public function quit(): void
     {
-        $this->setRunning(false);
+        $this->synchronized(function(): void
+        {
+            $this->setRunning(false);
+            $this->notify();
+        });
         parent::quit();
     }
 }
