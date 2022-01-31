@@ -2,6 +2,9 @@
 
 A minimalistic implementation of [Promises](https://en.wikipedia.org/wiki/Futures_and_promises) for PHP.
 
+## Why is it archived
+Working with threads in PHP is painful especially when trying to implement ES6-like promises.
+
 ## Installation via DEVirion
 
 Install the [DEVirion](https://poggit.pmmp.io/ci/poggit/devirion/DEVirion) plugin and start your server. This will create a `virions` folder in your server's root directory.
